@@ -17,16 +17,16 @@ export default {
       const url = new URL(request.url);
 
       if (url.pathname === '/api/stats') {
-        return handleStats(request, env);
+        return await handleStats(request, env);
       }
 
       if (url.pathname === '/api/admin/config') {
-        if (request.method === 'GET') return handleGetConfig(request, env);
-        if (request.method === 'POST') return handleSaveConfig(request, env);
+        if (request.method === 'GET') return await handleGetConfig(request, env);
+        if (request.method === 'POST') return await handleSaveConfig(request, env);
       }
 
       if (url.pathname === '/api/admin/test') {
-        return handleTestConfig(request, env);
+        return await handleTestConfig(request, env);
       }
 
       return json({ success: false, message: 'Not found' }, 404);

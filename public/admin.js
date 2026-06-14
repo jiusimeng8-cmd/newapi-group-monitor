@@ -18,7 +18,7 @@ async function loadConfig() {
     const res = await fetch(`${apiBase}/api/admin/config`, {
       headers: { 'x-admin-password': password },
     });
-    const payload = await res.json();
+    const payload = await readJson(res);
     if (!payload.success) throw new Error(payload.message || '读取失败');
     form.base_url.value = payload.data.base_url || '';
     form.user_id.value = payload.data.user_id || '';
@@ -46,7 +46,7 @@ async function submitConfig(path) {
         refresh_interval_seconds: Number(data.refresh_interval_seconds),
       }),
     });
-    const payload = await res.json();
+    const payload = await readJson(res);
     if (!payload.success) throw new Error(payload.message || '操作失败');
     form.access_token.value = '';
     setMessage(payload.message || '完成');
@@ -57,4 +57,13 @@ async function submitConfig(path) {
 
 function setMessage(text) {
   message.textContent = text;
+}
+
+async function readJson(res) {
+  const text = await res.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error(`服务端返回了非 JSON 响应：HTTP ${res.status}`);
+  }
 }
