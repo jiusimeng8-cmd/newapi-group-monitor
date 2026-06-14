@@ -129,6 +129,7 @@ async function fetchRemoteStats(config) {
   const pageSize = 200;
   let page = 0;
   let allLogs = [];
+  const groups = await fetchRemoteGroups(config);
 
   while (page < 50) {
     const result = await remoteGet(
@@ -141,11 +142,16 @@ async function fetchRemoteStats(config) {
     page += 1;
   }
 
-  return aggregateLogs(allLogs, nowSeconds());
+  return aggregateLogs(allLogs, nowSeconds(), groups);
 }
 
 async function testRemote(config) {
   await remoteGet(config, '/api/user/self');
+}
+
+async function fetchRemoteGroups(config) {
+  const payload = await remoteGet(config, '/api/group/');
+  return normalizeGroupItems(payload);
 }
 
 async function remoteGet(config, path) {
@@ -168,8 +174,18 @@ async function remoteGet(config, path) {
   return payload;
 }
 
-function aggregateLogs(logs, now) {
+function aggregateLogs(logs, now, groups = []) {
   const map = new Map();
+  for (const group of groups) {
+    if (!group) continue;
+    map.set(group, {
+      group,
+      one_hour: emptyWindow(),
+      thirty_minute: emptyWindow(),
+      five_minute: emptyWindow(),
+    });
+  }
+
   for (const log of logs) {
     if (log.type !== LOG_TYPE_CONSUME && log.type !== LOG_TYPE_ERROR) continue;
     if (!Number.isFinite(log.created_at) || log.created_at < now - 3600) continue;
@@ -196,7 +212,13 @@ function aggregateLogs(logs, now) {
     five_minute: finalizeWindow(row.five_minute),
   }));
 
-  rows.sort((a, b) => b.one_hour.total - a.one_hour.total || a.group.localeCompare(b.group));
+  rows.sort((a, b) => {
+    const byFailures = b.five_minute.failed - a.five_minute.failed;
+    if (byFailures !== 0) return byFailures;
+    const byTotal = b.one_hour.total - a.one_hour.total;
+    if (byTotal !== 0) return byTotal;
+    return a.group.localeCompare(b.group);
+  });
   return rows;
 }
 
@@ -228,6 +250,21 @@ function normalizeLogItems(payload) {
     created_at: Number(item.created_at),
     group: item.group || 'default',
   }));
+}
+
+function normalizeGroupItems(payload) {
+  const raw = payload.data?.items || payload.data?.groups || payload.data || [];
+  if (Array.isArray(raw)) return [...new Set(raw.map(normalizeGroupName).filter(Boolean))];
+  if (raw && typeof raw === 'object') return Object.keys(raw).map(normalizeGroupName).filter(Boolean);
+  return [];
+}
+
+function normalizeGroupName(value) {
+  if (typeof value === 'string') return value.trim();
+  if (value && typeof value === 'object') {
+    return String(value.group || value.name || value.key || '').trim();
+  }
+  return '';
 }
 
 async function getConfig(env, options = {}) {
