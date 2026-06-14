@@ -131,7 +131,7 @@ async function fetchRemoteStats(config) {
   let allLogs = [];
   const groups = await fetchRemoteGroups(config);
 
-  while (page < 100) {
+  while (page < 1000) {
     const result = await remoteGet(
       config,
       `/api/log/?p=${page}&page_size=${pageSize}&start_timestamp=${since}`,
@@ -139,6 +139,7 @@ async function fetchRemoteStats(config) {
     const items = normalizeLogItems(result);
     allLogs = allLogs.concat(items);
     if (items.length === 0) break;
+    if (items.some((item) => Number.isFinite(item.created_at) && item.created_at < since)) break;
     page += 1;
   }
 
