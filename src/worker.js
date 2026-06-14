@@ -129,7 +129,7 @@ async function fetchRemoteStats(config) {
   const pageSize = 100;
   let page = 0;
   let allLogs = [];
-  const groups = await fetchRemoteGroups(config);
+  const groups = await fetchVisibleGroups(config);
 
   while (page < 1000) {
     const result = await remoteGet(
@@ -148,6 +148,17 @@ async function fetchRemoteStats(config) {
 
 async function testRemote(config) {
   await remoteGet(config, '/api/user/self');
+}
+
+async function fetchVisibleGroups(config) {
+  try {
+    const payload = await remoteGet(config, '/api/pricing');
+    const groups = normalizeUsableGroups(payload);
+    if (groups.length) return groups;
+  } catch {
+    // Fall back to the admin group list for older New API versions.
+  }
+  return fetchRemoteGroups(config);
 }
 
 async function fetchRemoteGroups(config) {
@@ -255,9 +266,34 @@ function normalizeLogItems(payload) {
 
 function normalizeGroupItems(payload) {
   const raw = payload.data?.items || payload.data?.groups || payload.data || [];
-  if (Array.isArray(raw)) return [...new Set(raw.map(normalizeGroupName).filter(Boolean))];
+  if (Array.isArray(raw)) {
+    return [
+      ...new Set(
+        raw
+          .filter(isVisibleGroup)
+          .map(normalizeGroupName)
+          .filter(Boolean),
+      ),
+    ];
+  }
   if (raw && typeof raw === 'object') return Object.keys(raw).map(normalizeGroupName).filter(Boolean);
   return [];
+}
+
+function normalizeUsableGroups(payload) {
+  const usable = payload.usable_group || payload.data?.usable_group || {};
+  if (Array.isArray(usable)) return [...new Set(usable.map(normalizeGroupName).filter(Boolean))];
+  if (usable && typeof usable === 'object') return Object.keys(usable).map(normalizeGroupName).filter(Boolean);
+  return [];
+}
+
+function isVisibleGroup(value) {
+  if (!value || typeof value !== 'object') return true;
+  if (value.deleted_at || value.deletedAt) return false;
+  if (value.status === false || value.enabled === false || value.enable === false) return false;
+  if (value.visible === false || value.is_visible === false || value.isVisible === false) return false;
+  if (value.status === 0 || value.status === 'disabled' || value.status === 'hidden') return false;
+  return true;
 }
 
 function normalizeGroupName(value) {
