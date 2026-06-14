@@ -17,27 +17,27 @@
       </header>
 
       <form id="configForm" class="form">
-        <label>
-          管理密码
+        <label class="field field-full">
+          <span>管理密码</span>
           <input name="admin_password" type="password" autocomplete="current-password" required />
         </label>
-        <label>
-          New API Base URL
+        <label class="field field-full">
+          <span>New API Base URL</span>
           <input name="base_url" type="url" placeholder="https://api.example.com" required />
         </label>
-        <label>
-          Access Token
+        <label class="field field-full">
+          <span>Access Token</span>
           <input name="access_token" type="password" autocomplete="new-password" placeholder="留空表示沿用已保存密钥" />
         </label>
-        <label>
-          User ID
+        <label class="field">
+          <span>User ID</span>
           <input name="user_id" inputmode="numeric" required />
         </label>
-        <label>
-          刷新间隔（秒）
+        <label class="field">
+          <span>刷新间隔（秒）</span>
           <input name="refresh_interval_seconds" type="number" min="30" max="3600" value="60" required />
         </label>
-        <div class="actions">
+        <div class="actions form-actions">
           <button id="loadBtn" type="button">读取配置</button>
           <button id="testBtn" type="button">测试连接</button>
           <button type="submit">保存并刷新</button>
