@@ -1,0 +1,17 @@
+{
+  "name": "newapi-group-monitor",
+  "version": "0.1.0",
+  "private": false,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler pages dev public --compatibility-date=2025-12-01 --d1=DB=newapi-group-monitor --persist-to=.wrangler/state --port 8788",
+    "dev:api": "wrangler dev src/worker.js --local --persist-to=.wrangler/state --port 8787",
+    "worker": "wrangler dev src/worker.js --local --persist-to=.wrangler/state --port 8787",
+    "deploy": "wrangler pages deploy public",
+    "db:init": "wrangler d1 execute DB --local --persist-to=.wrangler/state --file=./migrations/0001_init.sql",
+    "db:init:remote": "wrangler d1 execute newapi-group-monitor --remote --file=./migrations/0001_init.sql"
+  },
+  "devDependencies": {
+    "wrangler": "^4.100.0"
+  }
+}

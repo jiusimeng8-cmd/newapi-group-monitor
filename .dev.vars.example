@@ -1,0 +1,7 @@
+ADMIN_PASSWORD=change-this-local-admin-password
+DEFAULT_REFRESH_INTERVAL_SECONDS=60
+
+# Optional bootstrap config. You can also save these from /admin after login.
+# NEWAPI_BASE_URL=https://your-newapi.example.com
+# NEWAPI_ACCESS_TOKEN=your-newapi-access-token
+# NEWAPI_USER_ID=1
