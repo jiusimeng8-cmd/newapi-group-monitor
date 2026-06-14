@@ -126,19 +126,19 @@ async function refreshSnapshot(env) {
 
 async function fetchRemoteStats(config) {
   const since = nowSeconds() - 3600;
-  const pageSize = 200;
+  const pageSize = 100;
   let page = 0;
   let allLogs = [];
   const groups = await fetchRemoteGroups(config);
 
-  while (page < 50) {
+  while (page < 100) {
     const result = await remoteGet(
       config,
       `/api/log/?p=${page}&page_size=${pageSize}&start_timestamp=${since}`,
     );
     const items = normalizeLogItems(result);
     allLogs = allLogs.concat(items);
-    if (items.length < pageSize) break;
+    if (items.length === 0) break;
     page += 1;
   }
 
