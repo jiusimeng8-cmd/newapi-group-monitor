@@ -2,6 +2,8 @@ const LOG_TYPE_CONSUME = 2;
 const LOG_TYPE_ERROR = 5;
 const SNAPSHOT_ID = 1;
 const CONFIG_ID = 1;
+const SESSION_TTL_SECONDS = 7 * 24 * 3600;
+const SESSION_COOKIE = 'ngm_admin_session';
 
 const jsonHeaders = {
   'content-type': 'application/json; charset=utf-8',
@@ -27,6 +29,11 @@ export default {
 
       if (url.pathname === '/api/admin/test') {
         return await handleTestConfig(request, env);
+      }
+
+      if (url.pathname === '/api/admin/session') {
+        if (request.method === 'POST') return await handleCreateSession(request, env);
+        if (request.method === 'DELETE') return await handleDeleteSession(request, env);
       }
 
       return json({ success: false, message: 'Not found' }, 404);
@@ -57,7 +64,7 @@ async function handleStats(request, env) {
 }
 
 async function handleGetConfig(request, env) {
-  requireAdmin(request, env);
+  await requireAdmin(request, env);
   const config = await getConfig(env, { requireComplete: false });
   return json({
     success: true,
@@ -72,7 +79,7 @@ async function handleGetConfig(request, env) {
 }
 
 async function handleSaveConfig(request, env) {
-  requireAdmin(request, env);
+  await requireAdmin(request, env);
   const input = await request.json();
   const current = await getConfig(env, { requireComplete: false });
   const config = normalizeConfig({
@@ -90,7 +97,7 @@ async function handleSaveConfig(request, env) {
 }
 
 async function handleTestConfig(request, env) {
-  requireAdmin(request, env);
+  await requireAdmin(request, env);
   const input = await request.json();
   const current = await getConfig(env, { requireComplete: false });
   const config = normalizeConfig({
@@ -102,6 +109,43 @@ async function handleTestConfig(request, env) {
   });
   await testRemote(config);
   return json({ success: true, message: 'Connection ok' });
+}
+
+async function handleCreateSession(request, env) {
+  requireAdminPassword(request, env);
+  const token = generateSessionToken();
+  const tokenHash = await sha256Hex(token);
+  const now = nowSeconds();
+  await env.DB.prepare(
+    `INSERT INTO monitor_session (session_hash, expires_at, created_at)
+      VALUES (?, ?, ?)`,
+  )
+    .bind(tokenHash, now + SESSION_TTL_SECONDS, now)
+    .run();
+  return json(
+    { success: true, message: 'Logged in' },
+    200,
+    {
+      'set-cookie': buildSessionCookie(token),
+    },
+  );
+}
+
+async function handleDeleteSession(_request, env) {
+  const cookie = getCookieValue(_request, SESSION_COOKIE);
+  if (cookie) {
+    const tokenHash = await sha256Hex(cookie);
+    await env.DB.prepare('DELETE FROM monitor_session WHERE session_hash = ?')
+      .bind(tokenHash)
+      .run();
+  }
+  return json(
+    { success: true, message: 'Logged out' },
+    200,
+    {
+      'set-cookie': `${SESSION_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax`,
+    },
+  );
 }
 
 async function refreshSnapshot(env) {
@@ -126,10 +170,16 @@ async function refreshSnapshot(env) {
 
 async function fetchRemoteStats(config) {
   const since = nowSeconds() - 3600;
+  const allLogs = await fetchRemoteLogs(config, since);
+  const groups = await fetchVisibleGroups(config);
+
+  return aggregateLogs(allLogs, nowSeconds(), groups);
+}
+
+async function fetchRemoteLogs(config, since) {
   const pageSize = 100;
   let page = 0;
   let allLogs = [];
-  const groups = await fetchVisibleGroups(config);
 
   while (page < 1000) {
     const result = await remoteGet(
@@ -143,7 +193,7 @@ async function fetchRemoteStats(config) {
     page += 1;
   }
 
-  return aggregateLogs(allLogs, nowSeconds(), groups);
+  return allLogs;
 }
 
 async function testRemote(config) {
@@ -400,6 +450,13 @@ async function ensureSchema(env) {
         refreshed_at INTEGER NOT NULL DEFAULT 0
       )
     `).run();
+    await env.DB.prepare(`
+      CREATE TABLE IF NOT EXISTS monitor_session (
+        session_hash TEXT PRIMARY KEY,
+        expires_at INTEGER NOT NULL,
+        created_at INTEGER NOT NULL
+      )
+    `).run();
   })();
   await schemaReady;
 }
@@ -422,7 +479,23 @@ function normalizeConfig(config, options = {}) {
   };
 }
 
-function requireAdmin(request, env) {
+async function requireAdmin(request, env) {
+  const expected = env.ADMIN_PASSWORD;
+  if (!expected) {
+    const error = new Error('ADMIN_PASSWORD is not configured');
+    error.status = 500;
+    throw error;
+  }
+  const cookie = getCookieValue(request, SESSION_COOKIE);
+  if (!cookie) {
+    const error = new Error('Unauthorized');
+    error.status = 401;
+    throw error;
+  }
+  await validateAdminSession(env, cookie);
+}
+
+function requireAdminPassword(request, env) {
   const expected = env.ADMIN_PASSWORD;
   if (!expected) {
     const error = new Error('ADMIN_PASSWORD is not configured');
@@ -437,8 +510,25 @@ function requireAdmin(request, env) {
   }
 }
 
-function json(data, status = 200) {
-  return new Response(JSON.stringify(data), { status, headers: jsonHeaders });
+async function validateAdminSession(env, cookie) {
+  const tokenHash = await sha256Hex(cookie);
+  const row = await env.DB.prepare(
+    'SELECT expires_at FROM monitor_session WHERE session_hash = ?',
+  )
+    .bind(tokenHash)
+    .first();
+  if (!row || Number(row.expires_at) <= nowSeconds()) {
+    const error = new Error('Unauthorized');
+    error.status = 401;
+    throw error;
+  }
+}
+
+function json(data, status = 200, extraHeaders = {}) {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { ...jsonHeaders, ...extraHeaders },
+  });
 }
 
 function nowSeconds() {
@@ -447,4 +537,28 @@ function nowSeconds() {
 
 function cleanError(error) {
   return error?.message || 'Unknown error';
+}
+
+function buildSessionCookie(token) {
+  return `${SESSION_COOKIE}=${token}; Path=/; Max-Age=${SESSION_TTL_SECONDS}; SameSite=Lax; HttpOnly`;
+}
+
+function getCookieValue(request, name) {
+  const cookieHeader = request.headers.get('cookie') || '';
+  const cookies = cookieHeader.split(';').map((part) => part.trim());
+  const prefix = `${name}=`;
+  const match = cookies.find((cookie) => cookie.startsWith(prefix));
+  return match ? match.slice(prefix.length) : '';
+}
+
+function generateSessionToken() {
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
+async function sha256Hex(value) {
+  const bytes = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
 }

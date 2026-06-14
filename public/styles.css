@@ -176,6 +176,15 @@ th {
   padding: 18px;
 }
 
+.login-card {
+  display: grid;
+  gap: 16px;
+  border: 1px solid #dfe6f1;
+  border-radius: 8px;
+  background: #fff;
+  padding: 18px;
+}
+
 .field {
   display: grid;
   gap: 8px;

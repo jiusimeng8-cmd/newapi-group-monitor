@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>管理面板</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="shell narrow">
+      <header class="toolbar">
+        <div>
+          <h1>监控配置</h1>
+          <p>密钥只提交到 Worker，不会存入浏览器。</p>
+        </div>
+        <a class="link-button" href="/">返回统计</a>
+      </header>
+
+      <form id="configForm" class="form">
+        <label class="field field-full">
+          <span>New API Base URL</span>
+          <input name="base_url" type="url" placeholder="https://api.example.com" required />
+        </label>
+        <label class="field field-full">
+          <span>Access Token</span>
+          <input name="access_token" type="password" autocomplete="new-password" placeholder="留空表示沿用已保存密钥" />
+        </label>
+        <label class="field">
+          <span>User ID</span>
+          <input name="user_id" inputmode="numeric" required />
+        </label>
+        <label class="field">
+          <span>刷新间隔（秒）</span>
+          <input name="refresh_interval_seconds" type="number" min="30" max="3600" value="60" required />
+        </label>
+        <div class="actions form-actions">
+          <button id="loadBtn" type="button">读取配置</button>
+          <button id="testBtn" type="button">测试连接</button>
+          <button type="submit">保存并刷新</button>
+        </div>
+      </form>
+
+      <section id="message" class="status-line"></section>
+    </main>
+    <script src="/config.js"></script>
+    <script src="/admin.js" type="module"></script>
+  </body>
+</html>
