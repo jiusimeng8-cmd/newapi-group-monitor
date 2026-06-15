@@ -230,14 +230,9 @@ async function testRemote(config) {
 }
 
 async function fetchVisibleGroups(config) {
-  try {
-    const payload = await remoteGet(config, '/api/pricing');
-    const groups = normalizeUsableGroups(payload);
-    if (groups.length) return groups;
-  } catch {
-    // Fall back to the admin group list for older New API versions.
-  }
-  return fetchRemoteGroups(config);
+  const payload = await remoteGet(config, '/api/pricing');
+  const groups = normalizeUsableGroups(payload);
+  return groups.filter(isChannelName);
 }
 
 async function fetchRemoteGroups(config) {
