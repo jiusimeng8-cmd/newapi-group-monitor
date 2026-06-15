@@ -376,6 +376,14 @@ function isVisibleGroup(value) {
   return true;
 }
 
+
+function isChannelName(name) {
+  if (!name) return false;
+  const lower = name.toLowerCase();
+  if (lower === 'default' || lower === 'auto') return false;
+  return true;
+}
+
 function normalizeGroupName(value) {
   if (typeof value === 'string') return value.trim();
   if (value && typeof value === 'object') {
