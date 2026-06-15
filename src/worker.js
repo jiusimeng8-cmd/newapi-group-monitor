@@ -278,14 +278,7 @@ function aggregateLogs(logs, now, groups = [], hiddenChannels = new Set()) {
     if (!Number.isFinite(log.created_at) || log.created_at < now - 3600) continue;
 
     const group = log.group || 'default';
-    if (!map.has(group)) {
-      map.set(group, {
-        group,
-        one_hour: emptyWindow(),
-        thirty_minute: emptyWindow(),
-        five_minute: emptyWindow(),
-      });
-    }
+    if (!map.has(group)) continue;
     const row = map.get(group);
     addLogToWindow(row.one_hour, log, now - 3600);
     addLogToWindow(row.thirty_minute, log, now - 1800);
