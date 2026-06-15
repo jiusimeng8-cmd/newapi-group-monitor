@@ -71,31 +71,9 @@ button:hover,
   color: #62718a;
 }
 
-.overview-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  margin-bottom: 16px;
-}
 
-.overview-grid article {
-  border: 1px solid #dfe6f1;
-  border-radius: 8px;
-  background: #fff;
-  padding: 14px;
-}
 
-.overview-grid span {
-  display: block;
-  margin-bottom: 8px;
-  color: #62718a;
-  font-size: 12px;
-}
 
-.overview-grid strong {
-  color: #172033;
-  font-size: 24px;
-}
 
 .table-wrap {
   overflow-x: auto;
@@ -282,9 +260,6 @@ input:focus {
     flex-direction: column;
   }
 
-  .overview-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 
   .form {
     grid-template-columns: 1fr;

@@ -2,8 +2,6 @@ const rowsEl = document.querySelector('#rows');
 const statusEl = document.querySelector('#statusText');
 const updatedEl = document.querySelector('#updatedText');
 const refreshBtn = document.querySelector('#refreshBtn');
-const groupCountEl = document.querySelector('#groupCount');
-const overallRateEl = document.querySelector('#overallRate');
 const apiBase = window.MONITOR_API_BASE || '';
 
 refreshBtn.addEventListener('click', () => loadStats(true));
@@ -16,7 +14,6 @@ async function loadStats(force) {
     const res = await fetch(`${apiBase}/api/stats${force ? '?refresh=true' : ''}`);
     const data = await res.json();
     renderRows(data.data || []);
-    renderOverview(data.data || []);
     statusEl.textContent = data.success ? '运行正常' : data.message || data.status || '暂无数据';
     updatedEl.textContent = data.refreshed_at ? new Date(data.refreshed_at * 1000).toLocaleString() : '-';
   } catch (error) {
@@ -68,19 +65,6 @@ function renderMetric(metric = {}) {
   </div>`;
 }
 
-function renderOverview(rows) {
-  const totals = rows.reduce(
-    (acc, row) => {
-      acc.total += Number(row.one_hour?.total || 0);
-      acc.success += Number(row.one_hour?.success || 0);
-      acc.failed += Number(row.one_hour?.failed || 0);
-      return acc;
-    },
-    { total: 0, success: 0, failed: 0 },
-  );
-  const rate = totals.total ? (totals.success * 100) / totals.total : 0;
-  groupCountEl.textContent = String(rows.length);  overallRateEl.textContent = totals.total ? `${rate.toFixed(2)}%` : '无样本';
-}
 
 function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, (char) => ({
