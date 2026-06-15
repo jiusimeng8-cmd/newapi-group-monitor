@@ -57,6 +57,7 @@ async function loadConfig() {
     const payload = await readJson(res);
     if (!payload.success) throw new Error(payload.message || '读取失败');
     configForm.base_url.value = payload.data.base_url || '';
+    configForm.access_token.value = payload.data.access_token || '';
     configForm.user_id.value = payload.data.user_id || '';
     configForm.refresh_interval_seconds.value = payload.data.refresh_interval_seconds || 60;
     setMessage(payload.data.has_access_token ? '已读取配置，密钥已保存' : '已读取配置，尚未保存密钥');
@@ -81,7 +82,6 @@ async function submitConfig(path) {
     });
     const payload = await readJson(res);
     if (!payload.success) throw new Error(payload.message || '操作失败');
-    configForm.access_token.value = '';
     setMessage(payload.message || '完成');
   } catch (error) {
     handlePanelError(error);
