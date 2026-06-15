@@ -249,7 +249,7 @@ async function remoteGet(config, path) {
   const response = await fetch(new URL(path, config.base_url), {
     headers: {
       authorization: `Bearer ${config.access_token}`,
-      'new-api-user': config.user_id,
+      'New-Api-User': config.user_id,
     },
   });
   const text = await response.text();
