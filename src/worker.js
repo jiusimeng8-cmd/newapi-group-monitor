@@ -257,10 +257,10 @@ async function remoteGet(config, path) {
   try {
     payload = JSON.parse(text);
   } catch {
-    throw new Error(`Remote returned non-json response: HTTP ${response.status}`);
+    throw new Error(`远端返回了非 JSON 响应: HTTP ${response.status}`);
   }
   if (!response.ok || payload.success === false) {
-    throw new Error(payload.message || `Remote request failed: HTTP ${response.status}`);
+    throw new Error(translateRemoteError(payload.message) || `远程请求失败: HTTP ${response.status}`);
   }
   return payload;
 }
