@@ -41,6 +41,22 @@
       </form>
 
       <section id="message" class="status-line"></section>
+
+      <section class="panel-section">
+        <div class="section-head">
+          <div>
+            <h2>渠道管理</h2>
+            <p>选择哪些渠道显示在公开统计页。</p>
+          </div>
+          <div class="actions">
+            <button id="showAllBtn" type="button">全选</button>
+            <button id="hideAllBtn" type="button">全不选</button>
+            <button id="saveChannelsBtn" type="button">保存渠道</button>
+          </div>
+        </div>
+        <div id="channelList" class="channel-list"></div>
+        <section id="channelMessage" class="status-line"></section>
+      </section>
     </main>
     <script src="/config.js"></script>
     <script src="/admin.js" type="module"></script>

@@ -31,6 +31,11 @@ export default {
         return await handleTestConfig(request, env);
       }
 
+      if (url.pathname === '/api/admin/channels') {
+        if (request.method === 'GET') return await handleGetChannels(request, env);
+        if (request.method === 'POST') return await handleSaveChannels(request, env);
+      }
+
       if (url.pathname === '/api/admin/session') {
         if (request.method === 'POST') return await handleCreateSession(request, env);
         if (request.method === 'DELETE') return await handleDeleteSession(request, env);
@@ -111,6 +116,29 @@ async function handleTestConfig(request, env) {
   return json({ success: true, message: 'Connection ok' });
 }
 
+async function handleGetChannels(request, env) {
+  await requireAdmin(request, env);
+  const config = await getConfig(env);
+  const channels = await fetchVisibleGroups(config);
+  const hidden = await getHiddenChannels(env);
+  return json({
+    success: true,
+    data: channels.map((name) => ({
+      name,
+      visible: !hidden.has(name),
+    })),
+  });
+}
+
+async function handleSaveChannels(request, env) {
+  await requireAdmin(request, env);
+  const input = await request.json();
+  const channels = Array.isArray(input.channels) ? input.channels : [];
+  await saveChannelVisibility(env, channels);
+  await refreshSnapshot(env);
+  return json({ success: true, message: '渠道显示设置已保存' });
+}
+
 async function handleCreateSession(request, env) {
   requireAdminPassword(request, env);
   const token = generateSessionToken();
@@ -173,7 +201,7 @@ async function fetchRemoteStats(config) {
   const allLogs = await fetchRemoteLogs(config, since);
   const groups = await fetchVisibleGroups(config);
 
-  return aggregateLogs(allLogs, nowSeconds(), groups);
+  return aggregateLogs(allLogs, nowSeconds(), groups, config.hidden_channels || new Set());
 }
 
 async function fetchRemoteLogs(config, since) {
@@ -236,9 +264,10 @@ async function remoteGet(config, path) {
   return payload;
 }
 
-function aggregateLogs(logs, now, groups = []) {
+function aggregateLogs(logs, now, groups = [], hiddenChannels = new Set()) {
   const map = new Map();
   for (const group of groups) {
+    if (hiddenChannels.has(group)) continue;
     if (!group) continue;
     map.set(group, {
       group,
@@ -367,8 +396,34 @@ async function getConfig(env, options = {}) {
     updated_at: 0,
   };
   const config = normalizeConfig({ ...envConfig, ...(row || {}) }, { requireComplete });
+  config.hidden_channels = await getHiddenChannels(env);
   if (!requireComplete) return config;
-  return normalizeConfig(config);
+  return config;
+}
+
+async function getHiddenChannels(env) {
+  const result = await env.DB.prepare(
+    'SELECT channel_name FROM monitor_channel_visibility WHERE visible = 0',
+  ).all();
+  return new Set((result.results || []).map((row) => row.channel_name));
+}
+
+async function saveChannelVisibility(env, channels) {
+  const now = nowSeconds();
+  for (const channel of channels) {
+    const name = String(channel.name || '').trim();
+    if (!name) continue;
+    const visible = channel.visible ? 1 : 0;
+    await env.DB.prepare(
+      `INSERT INTO monitor_channel_visibility (channel_name, visible, updated_at)
+        VALUES (?, ?, ?)
+        ON CONFLICT(channel_name) DO UPDATE SET
+          visible = excluded.visible,
+          updated_at = excluded.updated_at`,
+    )
+      .bind(name, visible, now)
+      .run();
+  }
 }
 
 async function saveConfig(env, config) {
@@ -455,6 +510,13 @@ async function ensureSchema(env) {
         session_hash TEXT PRIMARY KEY,
         expires_at INTEGER NOT NULL,
         created_at INTEGER NOT NULL
+      )
+    `).run();
+    await env.DB.prepare(`
+      CREATE TABLE IF NOT EXISTS monitor_channel_visibility (
+        channel_name TEXT PRIMARY KEY,
+        visible INTEGER NOT NULL DEFAULT 1,
+        updated_at INTEGER NOT NULL DEFAULT 0
       )
     `).run();
   })();
