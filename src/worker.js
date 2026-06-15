@@ -41,7 +41,7 @@ export default {
         if (request.method === 'DELETE') return await handleDeleteSession(request, env);
       }
 
-      return json({ success: false, message: 'Not found' }, 404);
+      return json({ success: false, message: '未找到' }, 404);
     } catch (error) {
       return json({ success: false, message: cleanError(error) }, error.status || 500);
     }
@@ -99,7 +99,7 @@ async function handleSaveConfig(request, env) {
   await testRemote(config);
   await saveConfig(env, config);
   await refreshSnapshot(env);
-  return json({ success: true, message: 'Saved' });
+  return json({ success: true, message: '已保存' });
 }
 
 async function handleTestConfig(request, env) {
@@ -114,7 +114,7 @@ async function handleTestConfig(request, env) {
       input.refresh_interval_seconds || current.refresh_interval_seconds,
   });
   await testRemote(config);
-  return json({ success: true, message: 'Connection ok' });
+  return json({ success: true, message: '连接成功' });
 }
 
 async function handleGetChannels(request, env) {
@@ -152,7 +152,7 @@ async function handleCreateSession(request, env) {
     .bind(tokenHash, now + SESSION_TTL_SECONDS, now)
     .run();
   return json(
-    { success: true, message: 'Logged in' },
+    { success: true, message: '登录成功' },
     200,
     {
       'set-cookie': buildSessionCookie(token),
@@ -169,7 +169,7 @@ async function handleDeleteSession(_request, env) {
       .run();
   }
   return json(
-    { success: true, message: 'Logged out' },
+    { success: true, message: '已登出' },
     200,
     {
       'set-cookie': `${SESSION_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax`,
@@ -455,7 +455,7 @@ async function getSnapshot(env) {
     .bind(SNAPSHOT_ID)
     .first();
   if (!row) {
-    return { data: [], status: 'empty', message: 'No snapshot yet', refreshed_at: 0 };
+    return { data: [], status: 'empty', message: '暂无快照', refreshed_at: 0 };
   }
   return {
     data: JSON.parse(row.data || '[]'),
@@ -530,9 +530,9 @@ function normalizeConfig(config, options = {}) {
   const accessToken = String(config.access_token || '').trim();
   const userId = String(config.user_id || '').trim();
   const refreshInterval = Number(config.refresh_interval_seconds || 60);
-  if (requireComplete && !baseUrl) throw new Error('Base URL is required');
-  if (requireComplete && !accessToken) throw new Error('Access token is required');
-  if (requireComplete && !userId) throw new Error('User ID is required');
+  if (requireComplete && !baseUrl) throw new Error('Base URL 未填写');
+  if (requireComplete && !accessToken) throw new Error('系统访问令牌未填写');
+  if (requireComplete && !userId) throw new Error('User ID 未填写');
   return {
     base_url: baseUrl,
     access_token: accessToken,
@@ -545,13 +545,13 @@ function normalizeConfig(config, options = {}) {
 async function requireAdmin(request, env) {
   const expected = env.ADMIN_PASSWORD;
   if (!expected) {
-    const error = new Error('ADMIN_PASSWORD is not configured');
+    const error = new Error('ADMIN_PASSWORD 未配置');
     error.status = 500;
     throw error;
   }
   const cookie = getCookieValue(request, SESSION_COOKIE);
   if (!cookie) {
-    const error = new Error('Unauthorized');
+    const error = new Error('未授权');
     error.status = 401;
     throw error;
   }
@@ -561,13 +561,13 @@ async function requireAdmin(request, env) {
 function requireAdminPassword(request, env) {
   const expected = env.ADMIN_PASSWORD;
   if (!expected) {
-    const error = new Error('ADMIN_PASSWORD is not configured');
+    const error = new Error('ADMIN_PASSWORD 未配置');
     error.status = 500;
     throw error;
   }
   const actual = request.headers.get('x-admin-password') || '';
   if (actual !== expected) {
-    const error = new Error('Unauthorized');
+    const error = new Error('未授权');
     error.status = 401;
     throw error;
   }
@@ -581,7 +581,7 @@ async function validateAdminSession(env, cookie) {
     .bind(tokenHash)
     .first();
   if (!row || Number(row.expires_at) <= nowSeconds()) {
-    const error = new Error('Unauthorized');
+    const error = new Error('未授权');
     error.status = 401;
     throw error;
   }
@@ -598,8 +598,26 @@ function nowSeconds() {
   return Math.floor(Date.now() / 1000);
 }
 
+
+function translateRemoteError(message) {
+  const map = {
+    'Unauthorized, invalid access token': '未授权，系统访问令牌无效',
+    'Unauthorized': '未授权',
+    '系统访问令牌未填写': '系统访问令牌未填写',
+    'Base URL 未填写': 'Base URL 未填写',
+    'User ID 未填写': 'User ID 未填写',
+    'invalid access token': '系统访问令牌无效',
+    '未找到': '未找到',
+  };
+  const lower = (message || '').toLowerCase();
+  for (const [key, value] of Object.entries(map)) {
+    if (lower.includes(key.toLowerCase())) return value;
+  }
+  return message;
+}
+
 function cleanError(error) {
-  return error?.message || 'Unknown error';
+  return error?.message || '未知错误';
 }
 
 function buildSessionCookie(token) {

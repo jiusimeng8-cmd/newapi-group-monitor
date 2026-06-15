@@ -147,7 +147,7 @@ function setAllChannels(visible) {
 function handlePanelError(error) {
   const text = error.message || '操作失败';
   setMessage(text);
-  if (text === 'Unauthorized') {
+  if (text === '未授权') {
     window.location.href = '/admin.html';
   }
 }
