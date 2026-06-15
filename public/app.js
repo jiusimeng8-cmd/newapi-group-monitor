@@ -3,7 +3,6 @@ const statusEl = document.querySelector('#statusText');
 const updatedEl = document.querySelector('#updatedText');
 const refreshBtn = document.querySelector('#refreshBtn');
 const groupCountEl = document.querySelector('#groupCount');
-const failedCountEl = document.querySelector('#failedCount');
 const overallRateEl = document.querySelector('#overallRate');
 const apiBase = window.MONITOR_API_BASE || '';
 
@@ -80,8 +79,7 @@ function renderOverview(rows) {
     { total: 0, success: 0, failed: 0 },
   );
   const rate = totals.total ? (totals.success * 100) / totals.total : 0;
-  groupCountEl.textContent = String(rows.length);  failedCountEl.textContent = String(totals.failed);
-  overallRateEl.textContent = totals.total ? `${rate.toFixed(2)}%` : '无样本';
+  groupCountEl.textContent = String(rows.length);  overallRateEl.textContent = totals.total ? `${rate.toFixed(2)}%` : '无样本';
 }
 
 function escapeHtml(value) {
