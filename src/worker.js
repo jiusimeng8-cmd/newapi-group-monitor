@@ -78,7 +78,7 @@ async function handleGetConfig(request, env) {
       access_token: config.access_token,
       user_id: config.user_id,
       refresh_interval_seconds: config.refresh_interval_seconds,
-      access_token: config.access_token, has_access_token: Boolean(config.access_token),
+      has_access_token: Boolean(config.access_token),
       updated_at: config.updated_at,
     },
   });
