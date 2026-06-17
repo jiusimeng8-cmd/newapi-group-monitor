@@ -4,12 +4,10 @@
   "private": false,
   "type": "module",
   "scripts": {
-    "dev": "wrangler pages dev public --compatibility-date=2025-12-01 --d1=DB=newapi-group-monitor --persist-to=.wrangler/state --port 8788",
-    "dev:api": "wrangler dev src/worker.js --local --persist-to=.wrangler/state --port 8787",
-    "worker": "wrangler dev src/worker.js --local --persist-to=.wrangler/state --port 8787",
-    "deploy": "wrangler pages deploy public",
-    "db:init": "wrangler d1 execute DB --local --persist-to=.wrangler/state --file=./migrations/0001_init.sql && wrangler d1 execute DB --local --persist-to=.wrangler/state --file=./migrations/0002_sessions.sql && wrangler d1 execute DB --local --persist-to=.wrangler/state --file=./migrations/0003_channel_visibility.sql",
-    "db:init:remote": "wrangler d1 execute newapi-group-monitor --remote --file=./migrations/0001_init.sql && wrangler d1 execute newapi-group-monitor --remote --file=./migrations/0002_sessions.sql && wrangler d1 execute newapi-group-monitor --remote --file=./migrations/0003_channel_visibility.sql"
+    "dev": "wrangler dev src/worker.js --local --persist-to=.wrangler/state --port 8813",
+    "deploy": "wrangler deploy",
+    "db:init": "wrangler d1 execute DB --local --persist-to=.wrangler/state --file=./migrations/0001_init.sql && wrangler d1 execute DB --local --persist-to=.wrangler/state --file=./migrations/0002_sessions.sql && wrangler d1 execute DB --local --persist-to=.wrangler/state --file=./migrations/0003_channel_visibility.sql && wrangler d1 execute DB --local --persist-to=.wrangler/state --file=./migrations/0004_security.sql",
+    "db:init:remote": "wrangler d1 execute newapi-group-monitor --remote --file=./migrations/0001_init.sql && wrangler d1 execute newapi-group-monitor --remote --file=./migrations/0002_sessions.sql && wrangler d1 execute newapi-group-monitor --remote --file=./migrations/0003_channel_visibility.sql && wrangler d1 execute newapi-group-monitor --remote --file=./migrations/0004_security.sql"
   },
   "devDependencies": {
     "wrangler": "^4.100.0"

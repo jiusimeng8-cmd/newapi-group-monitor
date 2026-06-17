@@ -3,40 +3,43 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'"
+    />
+    <meta name="referrer" content="no-referrer" />
     <title>New API Group Monitor</title>
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
-    <main class="shell">
-      <header class="toolbar">
-        <div>
+    <main class="shell status-shell">
+      <a class="back-link" href="/admin.html" aria-label="进入配置">‹ 配置</a>
+
+      <header class="hero">
+        <div class="hero-main">
+          <div class="view-label">
+            <span class="brand-mark">∿</span>
+            <span>GROUP VIEW</span>
+          </div>
           <h1>分组成功率</h1>
-          <p id="summary">最近 1H / 30min / 5min 请求成功率</p>
+          <div class="hero-meta">
+            <span id="groupCount">0 个分组</span>
+            <span id="configStatus">公开监控</span>
+            <span id="nextUpdateText">NEXT UPDATE IN --S</span>
+          </div>
         </div>
-        <div class="actions">
-          <a class="link-button" href="/admin.html">配置</a>
-          <button id="refreshBtn" type="button">刷新</button>
+        <div class="hero-side">
+          <div class="operation-pill">
+            <span class="dot"></span>
+            <span id="statusText">加载中</span>
+          </div>
+          <div class="update-row">
+            <span id="updatedText">-</span>
+          </div>
         </div>
       </header>
 
-      <section class="status-line">
-        <span id="statusText">加载中</span>
-        <span id="updatedText">-</span>
-      </section>
-
-      <section class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>分组</th>
-              <th>1H</th>
-              <th>30min</th>
-              <th>5min</th>
-            </tr>
-          </thead>
-          <tbody id="rows"></tbody>
-        </table>
-      </section>
+      <section id="rows" class="card-grid" aria-live="polite"></section>
     </main>
     <script src="/config.js"></script>
     <script src="/app.js" type="module"></script>

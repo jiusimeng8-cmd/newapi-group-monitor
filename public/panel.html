@@ -3,6 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'"
+    />
+    <meta name="referrer" content="no-referrer" />
     <title>管理面板</title>
     <link rel="stylesheet" href="/styles.css" />
   </head>
@@ -23,7 +28,7 @@
         </label>
         <label class="field field-full">
           <span>系统访问令牌</span>
-          <input name="access_token" type="text" autocomplete="off" placeholder="系统访问令牌" />
+          <input name="access_token" type="password" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="系统访问令牌" />
         </label>
         <label class="field">
           <span>User ID</span>
@@ -32,6 +37,10 @@
         <label class="field">
           <span>刷新间隔（秒）</span>
           <input name="refresh_interval_seconds" type="number" min="30" max="3600" value="60" required />
+        </label>
+        <label class="field field-full">
+          <span>后台允许 IP</span>
+          <textarea name="admin_allow_ips" rows="3" placeholder="203.0.113.5&#10;198.51.100.0/24"></textarea>
         </label>
         <div class="actions form-actions">
           <button id="loadBtn" type="button">读取配置</button>
@@ -45,13 +54,36 @@
       <section class="panel-section">
         <div class="section-head">
           <div>
-            <h2>渠道管理</h2>
-            <p>选择哪些渠道显示在公开统计页。</p>
+            <h2>面板密码</h2>
+            <p>修改后当前登录会失效，需要重新进入管理面板。</p>
+          </div>
+        </div>
+        <form id="passwordForm" class="form compact-form">
+          <label class="field field-full">
+            <span>当前面板密码</span>
+            <input name="current_password" type="password" autocomplete="current-password" required />
+          </label>
+          <label class="field field-full">
+            <span>新面板密码</span>
+            <input name="new_password" type="password" autocomplete="new-password" minlength="8" required />
+          </label>
+          <div class="actions form-actions">
+            <button id="passwordBtn" type="submit">更新密码</button>
+          </div>
+        </form>
+        <section id="passwordMessage" class="status-line"></section>
+      </section>
+
+      <section class="panel-section">
+        <div class="section-head">
+          <div>
+            <h2>分组管理</h2>
+            <p>选择哪些分组显示在公开统计页。</p>
           </div>
           <div class="actions">
             <button id="showAllBtn" type="button">全选</button>
             <button id="hideAllBtn" type="button">全不选</button>
-            <button id="saveChannelsBtn" type="button">保存渠道</button>
+            <button id="saveChannelsBtn" type="button">保存分组</button>
           </div>
         </div>
         <div id="channelList" class="channel-list"></div>

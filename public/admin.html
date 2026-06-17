@@ -3,6 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'"
+    />
+    <meta name="referrer" content="no-referrer" />
     <title>管理登录</title>
     <link rel="stylesheet" href="/styles.css" />
   </head>
@@ -19,7 +24,7 @@
       <form id="loginForm" class="login-card">
         <label class="field field-full">
           <span>面板密码</span>
-          <input name="admin_password" type="password" autocomplete="current-password" required />
+          <input name="admin_password" type="password" autocomplete="current-password" minlength="8" required />
         </label>
         <div class="actions form-actions">
           <button type="submit">进入管理面板</button>

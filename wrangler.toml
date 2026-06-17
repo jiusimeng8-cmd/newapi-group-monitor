@@ -1,6 +1,15 @@
 name = "newapi-group-monitor"
 compatibility_date = "2025-12-01"
-pages_build_output_dir = "public"
+main = "src/worker.js"
+
+# Optional: bind a custom domain after you deploy.
+# routes = [
+#   { pattern = "status.example.com", custom_domain = true }
+# ]
+
+[assets]
+directory = "public"
+binding = "ASSETS"
 
 [[d1_databases]]
 binding = "DB"
@@ -9,6 +18,3 @@ database_id = "replace-with-cloudflare-d1-database-id"
 
 [vars]
 DEFAULT_REFRESH_INTERVAL_SECONDS = "60"
-
-[triggers]
-crons = ["*/5 * * * *"]
