@@ -1,8 +1,18 @@
 {
   "name": "newapi-group-monitor",
   "version": "0.1.0",
+  "description": "Lightweight New API group success-rate status page for Cloudflare Workers and D1.",
   "private": false,
   "type": "module",
+  "keywords": [
+    "new-api",
+    "newapi",
+    "status-page",
+    "monitoring",
+    "success-rate",
+    "cloudflare-workers",
+    "cloudflare-d1"
+  ],
   "scripts": {
     "dev": "wrangler dev src/worker.js --local --persist-to=.wrangler/state --port 8813",
     "deploy": "wrangler deploy",
