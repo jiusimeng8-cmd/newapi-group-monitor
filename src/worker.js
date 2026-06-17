@@ -156,9 +156,7 @@ async function handleTestConfig(request, env) {
 
 async function handleGetChannels(request, env) {
   await requireAdmin(request, env);
-  const config = await getConfig(env);
-  const channels = await fetchVisibleGroups(config);
-  await saveCachedGroupNames(env, channels);
+  const channels = await getLocalGroupNames(env);
   const hidden = await getHiddenChannels(env);
   return json({
     success: true,
@@ -166,6 +164,7 @@ async function handleGetChannels(request, env) {
       name,
       visible: !hidden.has(name),
     })),
+    message: channels.length ? '已读取缓存分组' : '暂无缓存分组，请先保存配置并刷新统计',
   });
 }
 
@@ -426,6 +425,16 @@ async function getCachedGroups(env, config) {
   const groups = await fetchVisibleGroups(config);
   await saveCachedGroupNames(env, groups);
   return groups;
+}
+
+async function getLocalGroupNames(env) {
+  const names = new Set(await getCachedGroupNames(env));
+  const snapshot = await getSnapshot(env);
+  for (const row of snapshot.data || []) {
+    const name = String(row.group || '').trim();
+    if (name) names.add(name);
+  }
+  return [...names].sort((a, b) => a.localeCompare(b));
 }
 
 async function fetchRemoteGroups(config) {

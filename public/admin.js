@@ -105,9 +105,8 @@ async function loadChannels() {
     const payload = await readJson(res);
     if (!payload.success) throw new Error(payload.message || '读取分组失败');
     renderChannels(payload.data || []);
-    setChannelMessage(`已读取 ${payload.data?.length || 0} 个分组`);
+    setChannelMessage(payload.message || `已读取 ${payload.data?.length || 0} 个分组`);
   } catch (error) {
-    handlePanelError(error);
     setChannelMessage(error.message || '读取分组失败');
   }
 }
